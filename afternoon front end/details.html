@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<!-- <!DOCTYPE html> -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afternoon Tips</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Varela+Round&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="safe-container">
+            <nav class="navbar">
+                <a class="nav-logo-link" href="/index.html">
+                    <img class="logo" src="./Media/Afternoon Tips.svg"/>
+                </a>
+                <div class="menu">
+                    <ul>
+                        <li><a href="/listacompleta.html">Todas as séries</a></li>
+                        <li><a href="/genre.html">Gêneros</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="section" id="media-details">
+
+            </div>
+            
+        </div>
+
+        
+    </div>
+</body>
+
+<script>
+
+$(document).ready(function(){
+    var urlParams = new URLSearchParams(window.location.search);
+    var windowId = urlParams.get('id');
+
+    console.log("ID do Card:", windowId);
+
+    if (windowId) {
+        $.ajax({
+            url: `http://localhost:5000/media_content/${windowId}`,
+            type: 'GET',
+            success: function(data_content) {
+                console.log('Dados do Media Content:', data_content);
+                var mediaId = data_content.media_id;
+                $.ajax({
+                    url: `http://localhost:5000/media/${mediaId}`,
+                    type: 'GET',
+                    success: function(mediaData) {
+                        console.log('Dados do Media:', mediaData);
+                        renderDetails(mediaData, data_content);
+                    },
+                    error: function(error) {
+                        console.log('Erro ao buscar dados do media:', error);
+                    }
+                });
+            },
+            error: function(error) {
+                console.log('Erro ao buscar dados do media_content:', error);
+                $('#media-details').html('<p>Erro ao buscar dados do conteúdo de mídia.</p>');
+            }
+        });
+    } else {
+        $('#media-details').html('<p>ID do card inválido.</p>');
+    }
+
+    function renderDetails(mediaData, mediaContentData) {
+        var contentHtml = `
+            <div class="media-container">
+                <div class="media-show">
+                    <h1>${mediaData.name}</h1>
+                    <img class="poster" src="${mediaData.poster}" alt="${mediaData.name}">
+                </div>
+                <div class="media-content-details">
+                    <p>Temporada: ${mediaContentData.temporada}</p>
+                    <p>Classificação etária: ${mediaContentData.classificacao_etaria}</p>
+                    <p>Plataformas de streaming: ${mediaContentData.plataformas_streaming}</p>
+                    <p>Número de episódios: ${mediaContentData.numero_de_episodios}</p>
+                    <p>Gênero: ${mediaContentData.genero}</p>
+                    <p>Nota: ${mediaContentData.nota}</p>
+                </div>
+            </div>
+            <div class="section-title">
+                    <h2>Sinopse</h2>
+                    <span class="highlight-rectangle"/>
+                </div>
+            <p>${mediaContentData.sinopse}</p>
+            `;
+        $('#media-details').html(contentHtml);
+    }
+    });
+
+
+    $(document).ready(function(){
+        $("#mudarCor").click(function(){
+            var bgColor = $("body").css("background-color");
+            if (bgColor == 'rgb(251, 91, 36)' || bgColor == 'rgb(255, 255, 255)'){
+                $("body").css("background-color", "#303036"); 
+            } else {
+                $("body").css("background-color", "#fb5b24"); 
+            }
+        });
+    });
+</script>
+    
+</html>

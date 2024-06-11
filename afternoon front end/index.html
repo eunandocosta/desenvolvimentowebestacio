@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<!-- <!DOCTYPE html> -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afternoon Tips</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Varela+Round&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="safe-container">
+            <nav class="navbar">
+                <a class="nav-logo-link" href="/index.html">
+                    <img class="logo" src="./Media/Afternoon Tips.svg"/>
+                </a>
+                <div class="menu">
+                    <ul>
+                        <li><a href="/listacompleta.html">Todas as séries</a></li>
+                        <li><a href="/genre.html">Gêneros</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            
+            <div class="banner">
+                <div class="banner-container">
+                    <h1 class="banner-title">Stranger Things</h1>
+                    <p class="banner-paragraph">Nova temporada tem acertos e erros. As crianças continuam a crescer, mas a produtora 
+                        insiste em fingir que não. Isso não apaga a atuação magistral de Winona Ryder, mas também 
+                        expõe a falta de vontade de alguns atores mirins.
+                    </p>
+                    <button class="btn-primary">Ler análise</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <h2>Destaques</h2>
+                    <span class="highlight-rectangle"/>
+                </div>
+
+                <div class="section-content" id="destaques">
+
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">
+                    <h2>Top 5 Maiores Notas Recentes</h2>
+                    <span class="highlight-rectangle"></span>
+                </div>
+                <div class="section-content" id="top5">
+                    
+                </div>
+            </div>
+
+            <div class="section">
+
+                <div class="section-title">
+                    <h2>Gêneros</h2>
+                    <span class="highlight-rectangle"/>
+                </div>
+
+                <div class="section-content" id="genres">
+                    <button class="btn-secondary">Terror</button>
+                    <button class="btn-secondary">Ação</button>
+                    <button class="btn-secondary">Comédia</button>
+                    <button class="btn-secondary">Drama</button>
+                    <button class="btn-secondary">Romance</button>
+                    <button class="btn-secondary">Aventura</button>
+                </div>
+            </div>
+            
+        </div>
+
+        
+    </div>
+</body>
+
+<script>
+
+    var mediaData = [];
+    var mediaContentData = [];
+
+    $(document).ready(function(){
+        // Promises para sincronizar as requisições AJAX
+        var mediaPromise = $.ajax({
+            url: 'http://localhost:5000/media/media_get',
+            type: 'GET',
+            success: function(data) {
+                mediaData = data;
+            },
+            error: function(error) {
+                console.log('Erro ao buscar dados:', error);
+            }
+        });
+
+        var mediaContentPromise = $.ajax({
+            url: 'http://localhost:5000/media_content/',
+            type: 'GET',
+            success: function(data_content) {
+                mediaContentData = data_content;
+            },
+            error: function(error) {
+                console.log('Erro ao buscar dados:', error);
+            }
+        });
+
+        $.when(mediaPromise, mediaContentPromise).done(function() {
+            updateHighlights(mediaData, mediaContentData);
+            renderTop5Notas(mediaData, mediaContentData);
+            renderGenres(mediaContentData);
+        });
+
+        function updateHighlights(mediaData, mediaContentData) {
+            $('#destaques').empty();
+
+            let lastThreeContent = mediaContentData.slice(-3);
+                lastThreeContent.forEach(function(item) {
+                    var mediaItem = mediaData.find(media => media.id === item.media_id);
+                    var name = mediaItem ? mediaItem.name : "N/A";
+                    var banner = mediaItem ? mediaItem.banner : "placeholder.jpg";  // Adicione um placeholder caso o banner não esteja disponível
+                    
+                    var cardHtml = `
+                    <div class="primary-card" data-id="${item.id}">
+                        <p class="primary-card-title">${name} - Temporada ${item.temporada}</p>
+                        <img class="primary-card-image" src="${banner}"/>
+                        <p class="primary-card-info">Mais informações clique aqui</p>
+                    </div>`;
+                    $('#destaques').append(cardHtml);
+                });
+            
+            $('.primary-card').click(function() {
+                var cardId = $(this).data('id');
+                window.location.href = 'details.html?id=' + cardId;
+            });
+        }
+    });
+
+    function renderGenres(mediaContentData) {
+        $('#genres').empty();
+
+       let genres = new Set();
+
+       mediaContentData.forEach(function(item) {
+            if (item.genero) {
+                item.genero.split(',').forEach(function(genre) {
+                    genres.add(genre.trim());
+                });
+            }
+        });
+
+        genres.forEach(function(genre) {
+            console.log(genre)
+            var buttonHtml = `<button class="btn-secondary">${genre}</button>`;
+            $('#genres').append(buttonHtml);
+        });
+
+        $('.btn-secondary').click(function() {
+            var selectedGenre = $(this).text();
+            window.location.href = 'genre.html?genre=' + encodeURIComponent(selectedGenre);
+        });
+    }
+
+
+    function renderTop5Notas(mediaData, mediaContentData) {
+        $('#top5').empty();
+
+        function dateDiffInDays(date1, date2) {
+            const msInDay = 24 * 60 * 60 * 1000;
+            return Math.floor((date2 - date1) / msInDay);
+        }
+
+        // Obter a data atual
+        const currentDate = new Date();
+
+        // Filtrar os conteúdos de mídia criados nos últimos 7 dias
+        const recentContent = mediaContentData.filter(item => dateDiffInDays(new Date(item.ultima_atualizacao), currentDate) <= 7);
+
+        let top5Content;
+
+        if (recentContent.length >= 5) {
+            // Ordenar os itens recentes por nota em ordem decrescente e depois por data de atualização
+            recentContent.sort(function(a, b) {
+                if (b.nota === a.nota) {
+                    return new Date(b.ultima_atualizacao) - new Date(a.ultima_atualizacao);
+                }
+                return b.nota - a.nota;
+            });
+
+            // Selecionar os 5 itens recentes com as maiores notas
+            top5Content = recentContent.slice(0, 5);
+        } else {
+            // Ordenar todos os itens por nota em ordem decrescente e depois por data de atualização
+            mediaContentData.sort(function(a, b) {
+                if (b.nota === a.nota) {
+                    return new Date(b.ultima_atualizacao) - new Date(a.ultima_atualizacao);
+                }
+                return b.nota - a.nota;
+            });
+
+            // Selecionar os 5 itens com as maiores notas
+            top5Content = mediaContentData.slice(0, 5);
+        }
+
+        top5Content.forEach(function(item) {
+            var mediaItem = mediaData.find(media => media.id === item.media_id);
+            var name = mediaItem ? mediaItem.name : "N/A";
+            var poster = mediaItem ? mediaItem.poster : "N/A";
+
+            var cardHtml = `
+            <div class="filme_box" data-id="${item.id}">
+                <img class="filme-box-img" src="${poster}" alt="${name}">
+                <p class="filme-box-title">${name} - Temporada ${item.temporada}</p>
+            </div>`;
+            $('#top5').append(cardHtml);
+        });
+
+        $('.filme_box').click(function() {
+            var cardId = $(this).data('id');
+            console.log(cardId);
+            window.location.href = 'details.html?id=' + cardId;
+        });
+    }
+</script>
+    
+</html>

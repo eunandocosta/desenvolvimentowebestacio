@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!-- <!DOCTYPE html> -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afternoon Tips</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Varela+Round&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="safe-container">
+            <nav class="navbar">
+                <a class="nav-logo-link" href="/index.html">
+                    <img class="logo" src="./Media/Afternoon Tips.svg"/>
+                </a>
+                <div class="menu">
+                    <ul>
+                        <li><a href="/listacompleta.html">Todas as séries</a></li>
+                        <li><a href="/genre.html">Gêneros</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="section">
+                <div class="section-title">
+                    <h2>Lista Completa</h2>
+                    <span class="highlight-rectangle"/>
+                </div>
+
+                <div class="section-content" id="lista-completa">
+
+                </div>
+            </div>
+
+    </div>
+</body>
+
+<script>
+
+    var mediaData = [];
+    var mediaContentData = [];
+
+    $(document).ready(function(){
+        // Promises para sincronizar as requisições AJAX
+        var mediaPromise = $.ajax({
+            url: 'http://localhost:5000/media/media_get',
+            type: 'GET',
+            success: function(data) {
+                mediaData = data;
+            },
+            error: function(error) {
+                console.log('Erro ao buscar dados:', error);
+            }
+        });
+
+        var mediaContentPromise = $.ajax({
+            url: 'http://localhost:5000/media_content/',
+            type: 'GET',
+            success: function(data_content) {
+                mediaContentData = data_content;
+            },
+            error: function(error) {
+                console.log('Erro ao buscar dados:', error);
+            }
+        });
+
+        $.when(mediaPromise, mediaContentPromise).done(function() {
+            renderListaCompleta(mediaData, mediaContentData);
+        });
+
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+    function renderListaCompleta(mediaData, mediaContentData) {
+        let genreSelected = getUrlParameter('genre');
+                
+        $('#lista-completa').empty();
+
+        if (genreSelected) {
+            let filteredContent = mediaContentData.filter(function(item) {
+                return item.genero && item.genero.includes(genreSelected);
+            });
+
+            filteredContent.forEach(function(item) {
+                var mediaItem = mediaData.find(media => media.id === item.media_id);
+                var name = mediaItem ? mediaItem.name : "N/A";
+                var poster = mediaItem ? mediaItem.poster : "N/A";
+
+                var cardHtml = `
+                <div class="filme_box" data-id="${item.id}">
+                    <img class="filme-box-img" src="${poster}" alt="${name}">
+                    <p class="filme-box-title">${name} - Temporada ${item.temporada}</p>
+                </div>`;
+                $('#lista-completa').append(cardHtml);
+            });
+
+            $('.filme_box').click(function() {
+                var cardId = $(this).data('id');
+                console.log(cardId);
+                window.location.href = 'details.html?id=' + cardId;
+            });
+        } else {
+            renderGenres(mediaContentData);
+        }
+    }
+
+    function renderGenres(mediaContentData) {
+        let genres = new Set();
+
+        mediaContentData.forEach(function(item) {
+            if (item.genero) {
+                item.genero.split(',').forEach(function(genre) {
+                    genres.add(genre.trim());
+                });
+            }
+        });
+
+        genres.forEach(function(genre) {
+            var buttonHtml = `<button class="btn-secondary" data-genre="${genre}">${genre}</button>`;
+            $('#lista-completa').append(buttonHtml);
+        });
+
+        $('.btn-secondary').click(function() {
+            var selectedGenre = $(this).data('genre');
+            window.location.href = 'genre.html?genre=' + encodeURIComponent(selectedGenre);
+        });
+    }
+})
+</script>
+    
+</html>

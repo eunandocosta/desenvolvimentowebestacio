@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afternoon Tips</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="safe-container">
+            <nav class="navbar">
+                <a class="nav-logo-link" href="/index.html">
+                    <img class="logo" src="./Media/Afternoon Tips.svg"/>
+                </a>
+                <div class="menu">
+                    <ul>
+                        <li><a href="/listacompleta.html">Todas as séries</a></li>
+                        <li><a href="/genre.html">Gêneros</a></li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="form-container">
+                <form id="mediaForm">
+                    <label class="form-label">Nome da mídia</label>
+                    <input class="form-input" type="text" id="media_name" required/>
+                    <label class="form-label">Banner da mídia</label>
+                    <input class="form-input" type="text" id="media_banner" required/>
+                    <label class="form-label">Poster da mídia</label>
+                    <input class="form-input" type="text" id="media_poster" required/>
+                    <button type="submit" class="btn-primary" id="send-media-data">Enviar</button>
+                </form>
+            </div>
+
+            <div class="form-container">
+                <form id="mediaContentForm">
+                    <label class="form-label">ID da mídia</label>
+                    <select class="form-input" id="media_content_id" required></select>
+                    <label class="form-label">Ano de lançamento</label>
+                    <input class="form-input" type="number" id="ano_de_lancamento" required/>
+                    <label class="form-label">Classificação etária</label>
+                    <input class="form-input" type="text" id="classificacao_etaria" required/>
+                    <label class="form-label">Plataformas de streaming</label>
+                    <input class="form-input" type="text" id="plataformas_streaming" required/>
+                    <label class="form-label">Número de episódios</label>
+                    <input class="form-input" type="number" id="numero_de_episodios" required/>
+                    <label class="form-label">Sinopse</label>
+                    <textarea class="form-input" id="sinopse" required></textarea>
+                    <label class="form-label">Gênero</label>
+                    <input class="form-input" type="text" id="genero" required/>
+                    <label class="form-label">Temporada</label>
+                    <input class="form-input" type="number" id="temporada" required/>
+                    <label class="form-label">Nota</label>
+                    <input class="form-input" type="number" step="0.1" id="nota" required/>
+                    <button type="submit" class="btn-primary" id="send-media-content-data">Enviar</button>
+                </form>
+            </div>
+
+            <div class="section-content" id="lista-completa">
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $.ajax({
+            url: 'http://localhost:5000/media/media_get',
+            type: 'GET',
+            success: function(data) {
+                var select = $('#media_content_id');
+                data.forEach(function(item) {
+                    select.append(`<option value="${item.id}">${item.id} - ${item.name}</option>`);
+                });
+
+                select.change(function() {
+                    var selectedId = $(this).val();
+                    var selectedItem = data.find(item => item.id == selectedId);
+                    if (selectedItem) {
+                        $('#media_name').val(selectedItem.name);
+                        $('#media_banner').val(selectedItem.banner);
+                        $('#media_poster').val(selectedItem.poster);
+                        $('#ano_de_lancamento').val(selectedItem.ano_de_lancamento);
+                        $('#classificacao_etaria').val(selectedItem.classificacao_etaria);
+                        $('#plataformas_streaming').val(selectedItem.plataformas_streaming);
+                        $('#numero_de_episodios').val(selectedItem.numero_de_episodios);
+                        $('#sinopse').val(selectedItem.sinopse);
+                        $('#genero').val(selectedItem.genero);
+                        $('#temporada').val(selectedItem.temporada);
+                        $('#nota').val(selectedItem.nota);
+                    }
+                });
+            },
+            error: function(xhr, status, error) {
+                console.log('Erro ao buscar dados de mídia:', error);
+            }
+        });
+
+        $(document).ready(function() {
+            $('#mediaForm').submit(function(event) {
+                event.preventDefault(); 
+
+                var formData = {
+                    name: $('#media_name').val(),
+                    banner: $('#media_banner').val(),
+                    poster: $('#media_poster').val()
+                };
+
+                $.ajax({
+                    url: 'http://localhost:5000/media/media_post',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(response) {
+                        console.log('Dados enviados com sucesso:', response);
+                        alert('Dados enviados com sucesso!');
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Erro ao enviar dados:', error);
+                        alert('Erro ao enviar dados!');
+                    }
+                });
+            });
+
+            $('#mediaContentForm').submit(function(event) {
+                event.preventDefault(); 
+
+                var formData = {
+                    media_id: $('#media_content_id').val(),
+                    ano_de_lancamento: $('#ano_de_lancamento').val(),
+                    classificacao_etaria: $('#classificacao_etaria').val(),
+                    plataformas_streaming: $('#plataformas_streaming').val(),
+                    numero_de_episodios: $('#numero_de_episodios').val(),
+                    sinopse: $('#sinopse').val(),
+                    genero: $('#genero').val(),
+                    temporada: $('#temporada').val(),
+                    nota: $('#nota').val()
+                };
+
+                $.ajax({
+                    url: 'http://localhost:5000/media_content/', 
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(response) {
+                        console.log('Dados enviados com sucesso:', response);
+                        alert('Dados enviados com sucesso!');
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Erro ao enviar dados:', error);
+                        alert('Erro ao enviar dados!');
+                    }
+                });
+            });
+        });
+
+        $(document).ready(function(){
+            var mediaPromise = $.ajax({
+                url: 'http://localhost:5000/media/media_get',
+                type: 'GET',
+                success: function(data) {
+                    mediaData = data;
+                },
+                error: function(error) {
+                    console.log('Erro ao buscar dados:', error);
+                }
+            });
+
+            var mediaContentPromise = $.ajax({
+                url: 'http://localhost:5000/media_content/',
+                type: 'GET',
+                success: function(data_content) {
+                    mediaContentData = data_content;
+                },
+                error: function(error) {
+                    console.log('Erro ao buscar dados:', error);
+                }
+            });
+
+            $.when(mediaPromise, mediaContentPromise).done(function() {
+                renderListaCompleta(mediaData, mediaContentData);
+            });
+
+            function renderListaCompleta(mediaData, mediaContentData) {
+                $('#lista-completa').empty();
+
+                console.log(mediaContentData)
+
+                mediaContentData.forEach(function(item) {
+                    var mediaItem = mediaData.find(media => media.id === item.media_id);
+                    var name = mediaItem ? mediaItem.name : "N/A";
+                    var poster = mediaItem ? mediaItem.poster : "N/A";
+
+                    var cardHtml = `
+                    <div class="filme_box" data-id="${item.id}" id="crud-func">
+                        <img class="filme-box-img" src="${poster}" alt="${name}">
+                        <p class="filme-box-title">${name} - Temporada ${item.temporada}</p>
+                        <button class='delete-button'>Deletar</button>
+                    </div>`;
+                    $('#lista-completa').append(cardHtml);
+                });
+
+                $('.delete-button').click(function(event) {
+                    event.stopPropagation();
+                    var cardId = $(this).closest('.filme_box').data('id');
+                    console.log("Deletando ", cardId);
+                    deleteMediaContent(cardId);
+                });
+            }
+        })
+            
+        function deleteMediaContent(id) {
+        $.ajax({
+            url: `http://localhost:5000/media_content/${id}`,
+            type: 'DELETE',
+            success: function(result) {
+                $(`#crud-func-${id}`).remove();
+                console.log('Mídia deletada com sucesso:', result);
+            },
+            error: function(error) {
+                console.log('Erro ao deletar mídia:', error);
+            }
+        });
+        }
+
+        $(document).ready(function() {
+            var mediaPromise = $.ajax({
+                url: 'http://localhost:5000/media/media_get',
+                type: 'GET',
+                success: function(data) {
+                    mediaData = data;
+                },
+                error: function(error) {
+                    console.log('Erro ao buscar dados:', error);
+                }
+            });
+
+            var mediaContentPromise = $.ajax({
+                url: 'http://localhost:5000/media_content/',
+                type: 'GET',
+                success: function(data_content) {
+                    mediaContentData = data_content;
+                },
+                error: function(error) {
+                    console.log('Erro ao buscar dados:', error);
+                }
+            });
+
+            $.when(mediaPromise, mediaContentPromise).done(function() {
+                renderListaCompleta(mediaData, mediaContentData);
+            });
+        });
+        
+    </script>
+</body>
+</html>
